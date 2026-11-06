@@ -1,0 +1,111 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { LANGS, STUDIOS, TOOLS, buildPrompt, copyText, isComplete, loadDraft, saveDraft, studioName, toolsText, upsertTask, type Draft, type TaskData } from "@/lib/midad";
+
+export const Route = createFileRoute("/result")({
+  head: () => ({
+    meta: [
+      { title: "مهمتك جاهزة | مِداد" },
+      { name: "description", content: "البرومبت المتخصص والأدوات المقترحة لتنفيذ مهمتك التعليمية." },
+      { property: "og:title", content: "مهمتك جاهزة | مِداد" },
+      { property: "og:description", content: "برومبت جاهز للنسخ وأدوات مقترحة." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: Result,
+});
+
+function Result() {
+  const navigate = useNavigate();
+  const [d, setD] = useState<Draft | null>(null);
+  useEffect(() => setD(loadDraft()), []);
+
+  if (!d) return null;
+  if (!isComplete(d)) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16 text-center">
+        <p className="mb-6 text-lg">لم تكتمل بيانات المهمة بعد.</p>
+        <Link to="/" className="rounded-full bg-primary px-6 py-3 font-bold text-primary-foreground">العودة إلى الاستوديوهات</Link>
+      </div>
+    );
+  }
+  const task: TaskData = d;
+  const prompt = buildPrompt(task);
+  const studio = STUDIOS.find((s) => s.id === task.studio)!;
+
+  const save = () => {
+    const saved = upsertTask(task, (d as Draft).taskId);
+    const next = { ...d, taskId: saved.id };
+    saveDraft(next); setD(next);
+    toast.success("تم حفظ مهمتك في مكتب مهامي");
+  };
+  const copy = async (text: string, msg: string) => toast[(await copyText(text)) ? "success" : "error"](msg);
+
+  const summary = [
+    ["الاستوديو", studioName(task.studio)], ["المادة", task.subject], ["الصف", task.grade],
+    ["اللغة", LANGS.find((l) => l.id === task.lang)?.name], ["عنوان الدرس", task.title],
+  ];
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="pop-in mb-8 rounded-3xl bg-hero p-8 text-center text-primary-foreground shadow-glow">
+        <div className="text-5xl">🏆</div>
+        <h1 className="mt-2 font-display text-3xl font-extrabold md:text-4xl">أحسنتِ! أصبحت مهمتك جاهزة للانطلاق</h1>
+      </div>
+
+      <section className="mb-8 rounded-3xl border-2 border-border bg-card p-6 shadow-card">
+        <h2 className="mb-4 font-display text-xl font-extrabold text-primary">📋 ملخص اختياراتك</h2>
+        <dl className="grid gap-3 sm:grid-cols-2">
+          {summary.map(([k, v]) => (
+            <div key={k} className="rounded-2xl bg-muted px-4 py-3">
+              <dt className="text-xs font-bold text-muted-foreground">{k}</dt>
+              <dd className="font-bold">{v}</dd>
+            </div>
+          ))}
+          <div className="rounded-2xl bg-muted px-4 py-3 sm:col-span-2">
+            <dt className="text-xs font-bold text-muted-foreground">الهدف التعليمي</dt>
+            <dd className="whitespace-pre-line font-bold">{task.goals}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="mb-8 rounded-3xl border-2 border-accent bg-card p-6 shadow-card">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-extrabold text-primary">{studio.icon} البرومبت الخاص – {studio.name}</h2>
+          <button onClick={() => copy(prompt, "تم نسخ البرومبت")} className="rounded-full bg-accent px-5 py-2 font-bold text-accent-foreground hover:opacity-90">📋 نسخ البرومبت</button>
+        </div>
+        <pre dir={task.lang === "en" ? "ltr" : "rtl"} className={`max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted p-5 font-sans text-sm leading-loose ${task.lang === "en" ? "text-left" : "text-right"}`}>{prompt}</pre>
+      </section>
+
+      <section className="mb-8">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-extrabold text-primary">🧰 الأدوات والتطبيقات المقترحة لتنفيذ مهمتك</h2>
+          <button onClick={() => copy(toolsText(task.studio), "تم نسخ الأدوات المقترحة")} className="rounded-full bg-secondary px-5 py-2 font-bold text-secondary-foreground hover:opacity-90">📋 نسخ الأدوات المقترحة</button>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {TOOLS[task.studio].map((t, i) => (
+            <div key={t.name} className="game-card p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-grad text-sm font-extrabold text-gold-foreground">{i + 1}</span>
+                <h3 dir="ltr" className="font-display text-lg font-extrabold text-primary">{t.name}</h3>
+              </div>
+              <ul className="space-y-2 text-sm leading-relaxed">
+                <li><b className="text-accent">دوره:</b> {t.role}</li>
+                <li><b className="text-accent">ماذا ستفعلين:</b> {t.action}</li>
+                <li><b className="text-accent">لماذا اخترناه:</b> {t.why}</li>
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <button onClick={save} className="rounded-2xl bg-gold-grad px-4 py-4 font-display text-lg font-extrabold text-gold-foreground shadow-card hover:scale-[1.02]">💾 حفظ مهمتي</button>
+        <button onClick={() => navigate({ to: "/studio/$studioId", params: { studioId: task.studio } })} className="rounded-2xl bg-primary px-4 py-4 font-bold text-primary-foreground hover:opacity-90">✏️ تعديل بيانات المهمة</button>
+        <Link to="/" className="rounded-2xl border-2 border-primary px-4 py-4 text-center font-bold text-primary hover:bg-secondary">🏠 العودة إلى الاستوديوهات</Link>
+      </div>
+    </div>
+  );
+}
