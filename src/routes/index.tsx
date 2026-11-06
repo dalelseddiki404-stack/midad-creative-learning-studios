@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import logo from "@/assets/school_logo.png.asset.json";
-import { STUDIOS } from "@/lib/midad";
+import { STUDIOS, saveDraft } from "@/lib/midad";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,6 +45,7 @@ function Home() {
               key={s.id}
               to="/studio/$studioId"
               params={{ studioId: s.id }}
+              onClick={() => saveDraft({})}
               className="game-card pop-in group relative flex flex-col items-center gap-3 overflow-hidden p-7 text-center"
               style={{ animationDelay: `${i * 70}ms` }}
             >
