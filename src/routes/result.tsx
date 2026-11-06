@@ -73,7 +73,7 @@ function Result() {
 
       <section className="mb-8 rounded-3xl border-2 border-accent bg-card p-6 shadow-card">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-xl font-extrabold text-primary">{studio.icon} البرومبت الخاص بـ{studio.name}</h2>
+          <h2 className="font-display text-xl font-extrabold text-primary">{studio.icon} البرومبت الخاص – {studio.name}</h2>
           <button onClick={() => copy(prompt, "تم نسخ البرومبت")} className="rounded-full bg-accent px-5 py-2 font-bold text-accent-foreground hover:opacity-90">📋 نسخ البرومبت</button>
         </div>
         <pre dir={task.lang === "en" ? "ltr" : "rtl"} className={`max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted p-5 font-sans text-sm leading-loose ${task.lang === "en" ? "text-left" : "text-right"}`}>{prompt}</pre>
