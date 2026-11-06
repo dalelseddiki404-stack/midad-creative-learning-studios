@@ -1,7 +1,7 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Progress } from "@/components/Shell";
-import { GRADES, LANGS, STUDIOS, SUBJECTS, isComplete, loadDraft, saveDraft, type Draft, type StudioId } from "@/lib/midad";
+import { GRADES, LANGS, STUDIOS, SUBJECTS, isComplete, loadDraft, saveDraft, type Draft, type Lang, type StudioId } from "@/lib/midad";
 
 export const Route = createFileRoute("/studio/$studioId")({
   beforeLoad: ({ params }) => {
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/studio/$studioId")({
   component: Setup,
 });
 
-function Picker({ label, icon, value, options, onPick }: { label: string; icon: string; value?: string; options: { id: string; name: string }[]; onPick: (v: string) => void }) {
+function Picker({ label, icon, value, options, onPick }: { label: string; icon: string; value?: string | undefined; options: { id: string; name: string }[]; onPick: (v: string) => void }) {
   const [open, setOpen] = useState(!value);
   const name = options.find((o) => o.id === value)?.name;
   return (
@@ -94,7 +94,7 @@ function Setup() {
       <div className="space-y-4">
         <Picker label="اختاري المادة" icon="📚" value={d.subject} options={SUBJECTS.map((s) => ({ id: s, name: s }))} onPick={(v) => update({ subject: v })} />
         {d.subject && <Picker label="اختاري الصف" icon="🎒" value={d.grade} options={GRADES.map((s) => ({ id: s, name: s }))} onPick={(v) => update({ grade: v })} />}
-        {d.grade && <Picker label="اختاري لغة المورد" icon="🌐" value={d.lang} options={LANGS} onPick={(v) => update({ lang: v as Draft["lang"] })} />}
+        {d.grade && <Picker label="اختاري لغة المورد" icon="🌐" value={d.lang} options={LANGS} onPick={(v) => update({ lang: v as Lang })} />}
         {d.lang && (
           <label className="pop-in block rounded-3xl border-2 border-border bg-card p-4 shadow-card">
             <span className="mb-3 flex items-center gap-3 font-display text-lg font-extrabold text-primary">

@@ -36,7 +36,7 @@ function Result() {
   const studio = STUDIOS.find((s) => s.id === task.studio)!;
 
   const save = () => {
-    const saved = upsertTask(task, d.taskId);
+    const saved = upsertTask(task, (d as Draft).taskId);
     const next = { ...d, taskId: saved.id };
     saveDraft(next); setD(next);
     toast.success("تم حفظ مهمتك في مكتب مهامي");
