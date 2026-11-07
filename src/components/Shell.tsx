@@ -1,19 +1,28 @@
 import { Link } from "@tanstack/react-router";
+import school from "@/assets/school_logo_official.webp.asset.json";
+import quality from "@/assets/quality_logo.png.asset.json";
+import ministry from "@/assets/ministry_logo.png.asset.json";
+
+export const SCHOOL = "مدرسة الطالب الذكي الخاصة – فرع المعبيلة ٢ – سلطنة عُمان";
+export const CREDIT = "تصميم وإشراف دلال مختار صديقي";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-hero text-xl text-primary-foreground shadow-card">✒️</span>
-          <span className="font-display text-2xl font-extrabold text-primary">مِداد</span>
+    <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
+        <Link to="/" className="flex min-w-0 items-center gap-3">
+          <img src={school.url} alt="شعار مدرسة الطالب الذكي الخاصة" className="h-12 w-12 shrink-0 object-contain" />
+          <span className="min-w-0 leading-tight">
+            <span className="block font-display text-xl font-extrabold text-primary">MIDAD <span className="text-gold">|</span> مِداد</span>
+            <span className="hidden truncate text-xs text-muted-foreground sm:block">مدرسة الطالب الذكي الخاصة – فرع المعبيلة ٢</span>
+          </span>
         </Link>
-        <nav className="flex items-center gap-2 text-sm font-bold">
+        <nav className="flex shrink-0 items-center gap-1 text-sm font-bold">
           <Link to="/" className="rounded-full px-3 py-2 text-muted-foreground hover:bg-muted" activeProps={{ className: "bg-secondary text-secondary-foreground" }} activeOptions={{ exact: true }}>
             الاستوديوهات
           </Link>
           <Link to="/desk" className="rounded-full px-3 py-2 text-muted-foreground hover:bg-muted" activeProps={{ className: "bg-secondary text-secondary-foreground" }}>
-            🗂️ مكتب مهامي
+            🗂️ <span className="hidden sm:inline">مكتب مهامي</span>
           </Link>
         </nav>
       </div>
@@ -21,15 +30,32 @@ export function SiteHeader() {
   );
 }
 
+export function InstitutionBand() {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+      {[
+        { src: ministry.url, alt: "شعار وزارة التربية والتعليم – سلطنة عُمان" },
+        { src: school.url, alt: "شعار مدرسة الطالب الذكي الخاصة" },
+        { src: quality.url, alt: "شعار نظام إدارة الجودة" },
+      ].map((l) => (
+        <img key={l.alt} src={l.src} alt={l.alt} className="h-16 w-auto max-w-[9rem] object-contain sm:h-20" />
+      ))}
+    </div>
+  );
+}
+
 export function SiteFooter() {
   return (
     <footer className="mt-12 border-t border-border bg-card">
-      <div className="mx-auto max-w-6xl px-4 py-5 text-center text-sm text-muted-foreground">
-        <span className="font-display font-extrabold text-primary">مِداد</span>
-        <span className="mx-2 text-gold">|</span>
-        إعداد وتصميم الأستاذة دلال مختار
-        <span className="mx-2 text-gold">|</span>
-        مدرسة الطالب الذكي الخاصة – فرع المعبيلة ٢
+      <div className="mx-auto max-w-6xl space-y-4 px-4 py-6 text-center text-sm text-muted-foreground">
+        <InstitutionBand />
+        <p>
+          <span className="font-display font-extrabold text-primary">MIDAD | مِداد</span>
+          <span className="mx-2 text-gold">|</span>
+          {CREDIT}
+          <span className="mx-2 text-gold">|</span>
+          {SCHOOL}
+        </p>
       </div>
     </footer>
   );

@@ -260,26 +260,67 @@ export function buildPrompt(d: TaskData): string {
   ].join("\n");
 }
 
-export interface Tool { name: string; role: string; action: string; why: string }
+export interface Tool { name: string; role: string; action: string; why: string; url?: string }
+
+// Official app websites for the visit buttons and logos.
+export const TOOL_URLS: Record<string, string> = {
+  ChatGPT: "https://chatgpt.com", Gemini: "https://gemini.google.com", NotebookLM: "https://notebooklm.google.com",
+  Canva: "https://www.canva.com", Gamma: "https://gamma.app", Lovable: "https://lovable.dev",
+  Genially: "https://genially.com", Quizizz: "https://wayground.com", "Kahoot!": "https://kahoot.com",
+  "Microsoft Word": "https://www.microsoft.com/microsoft-365/word", "Microsoft PowerPoint": "https://www.microsoft.com/microsoft-365/powerpoint",
+  "Google Forms": "https://docs.google.com/forms", Wordwall: "https://wordwall.net", "Google Flow": "https://labs.google/flow",
+  "Google Vids": "https://vids.google.com",
+};
+
+export function toolUrl(name: string) { return TOOL_URLS[name] ?? "https://www.google.com/search?q=" + encodeURIComponent(name); }
+export function toolLogo(name: string) {
+  const host = new URL(toolUrl(name)).hostname;
+  return `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
+}
+
+// Ready prompt for a specific app, tied to the teacher's subject, grade and lesson.
+export function toolPrompt(t: Tool, d: TaskData): string {
+  if (t.name === "ChatGPT") return buildPrompt(d);
+  const lang = d.lang === "en" ? "English" : "العربية";
+  const lesson = `«${d.title.trim()}» – ${d.subject} – ${d.grade}`;
+  const goals = goalList(d.goals).join("؛ ");
+  return [
+    `استخدم ${t.name} في هذه المهمة: ${t.role}.`,
+    `الدرس: ${lesson}. لغة المورد: ${lang}.`,
+    `الأهداف: ${goals}.`,
+    `المطلوب: ${t.action}.`,
+    `اجعل الناتج مناسباً لمتعلمين في ${d.grade} بلغة بسيطة وتصميم واضح وجذاب ومن دون أخطاء.`,
+  ].join("\n");
+}
 
 export const TOOLS: Record<StudioId, Tool[]> = {
   worksheets: [
     { name: "ChatGPT", role: "توليد محتوى ورقة العمل", action: "تلصقين البرومبت وتراجعين الأنشطة والتعليمات وتطلبين التعديل", why: "يكتب محتوى متدرجاً ومنظماً بسرعة ويقبل التعديل بالمحادثة" },
+    { name: "Gemini", role: "تطوير الأفكار والرسومات والمحتوى", action: "تطلبين أفكار أنشطة بديلة ووصف رسومات مناسبة للدرس", why: "يقترح أفكاراً متنوعة ويساعد في الصور التوضيحية" },
     { name: "Canva", role: "تصميم الورقة وإخراجها بصرياً", action: "تختارين قالب ورقة عمل وتنقلين الأنشطة وتضيفين الصور والأيقونات ثم تحمّلينها PDF", why: "يضم قوالب أوراق عمل جاهزة ومكتبة رسومات مناسبة للأطفال" },
     { name: "Microsoft Word", role: "التنسيق النهائي والطباعة", action: "تضبطين الجداول ومساحات الكتابة والخطوط العربية ثم تطبعين", why: "دقيق في التحكم بالصفحة والطباعة ويدعم العربية جيداً" },
   ],
   presentations: [
     { name: "ChatGPT", role: "إعداد محتوى الشرائح وملاحظات المعلمة", action: "تلصقين البرومبت وتحصلين على محتوى كل شريحة ووصف صورها", why: "ينظم الدرس في تسلسل منطقي من التمهيد إلى الخلاصة" },
+    { name: "NotebookLM", role: "تحليل المصادر واستخراج محتوى موثق", action: "ترفعين كتاب الطالب أو ملفات الدرس وتستخرجين الأفكار الرئيسة الموثقة للعرض", why: "يعتمد على مصادرك أنت فيقلل الأخطاء ويوثق المعلومة"},
+    { name: "Gemini", role: "تطوير الأفكار والعناصر البصرية", action: "تطلبين أفكار تمهيد مشوقة ووصف صور لكل شريحة", why: "يساعد في الأفكار الإبداعية والعناصر البصرية" },
+    { name: "Gamma", role: "إنشاء عرض منظم بالذكاء الاصطناعي", action: "تلصقين محتوى الشرائح فيولّد عرضاً مرتباً قابلاً للتعديل", why: "يحول النص إلى عرض جاهز في دقائق"},
     { name: "Microsoft PowerPoint", role: "بناء العرض وتقديمه", action: "تنشئين الشرائح، وتستخدمين المصمم (Designer) لاقتراح التنسيق، وتضيفين الحركات وملاحظات المتحدث", why: "أداة عرض متكاملة تعمل دون إنترنت وتدعم ملاحظات المتحدث" },
     { name: "Canva", role: "بديل لتصميم شرائح جذابة", action: "تختارين قالب عرض تعليمي وتنسخين المحتوى وتضيفين العناصر المرئية", why: "قوالب ملونة جاهزة مناسبة للأطفال ويمكن التقديم منه مباشرة" },
   ],
   assessment: [
     { name: "ChatGPT", role: "صياغة الأسئلة ودليل التصحيح", action: "تلصقين البرومبت وتراجعين الأسئلة وتوازن الصعوبة ونسخة المعلمة", why: "يبني أسئلة متنوعة مرتبطة بالأهداف مع إجابات نموذجية" },
+    { name: "Gemini", role: "اقتراح أنماط متنوعة من الأسئلة", action: "تطلبين أسئلة بأنماط مختلفة ومستويات تفكير متعددة", why: "يوسّع التنويع في أنماط الأسئلة" },
+    { name: "Quizizz", role: "إنشاء اختبار تفاعلي", action: "تنشئين اختباراً بالأسئلة ويحله المتعلمون بأجهزتهم مع تقرير نتائج", why: "تقويم تفاعلي ممتع مع تقارير فورية للمعلمة"},
+    { name: "Kahoot!", role: "مسابقة تقويمية تنافسية", action: "تحولين الأسئلة إلى مسابقة صفية مباشرة", why: "يضيف روح المنافسة للتقويم الختامي"},
     { name: "Google Forms", role: "تحويل الاختبار إلى اختبار إلكتروني", action: "تنشئين نموذجاً بوضع «اختبار»، وتضيفين الأسئلة ومفتاح الإجابة والدرجات، ثم ترسلين الرابط", why: "يصحح الأسئلة الموضوعية تلقائياً ويعرض النتائج للمعلمة" },
     { name: "Microsoft Word", role: "إعداد النسخة الورقية", action: "تنسقين نسخة المتعلم للطباعة وتحفظين دليل الإجابة في ملف منفصل", why: "مناسب للاختبارات الورقية ويحافظ على فصل نسخة المعلمة" },
   ],
   games: [
     { name: "ChatGPT", role: "تصميم فكرة اللعبة وقواعدها وأسئلتها", action: "تلصقين البرومبت وتحصلين على المراحل والتحديات والأسئلة الجاهزة", why: "يبتكر قصة اللعبة ويصوغ التحديات حسب الأهداف" },
+    { name: "Gemini", role: "تطوير الأفكار والعناصر البصرية والبرمجة", action: "تطلبين شخصيات وتصميماً بصرياً للعبة ومساعدة في الأوامر", why: "يساعد في الجانب البصري والبرمجي للعبة" },
+    { name: "Lovable", role: "بناء لعبة تعليمية تفاعلية بالوصف", action: "تصفين فكرة اللعبة ومراحلها وأسئلتها باللغة العادية فيبني لعبة ويب جاهزة", why: "يبني تطبيقات وألعاب حقيقية دون برمجة"},
+    { name: "Genially", role: "ألعاب وعروض تفاعلية بالقوالب", action: "تختارين قالب لعبة (هروب، مغامرة، مسابقة) وتضيفين الأسئلة", why: "قوالب ألعاب تعليمية جاهزة وجذابة"},
     { name: "Wordwall", role: "تنفيذ اللعبة تفاعلياً", action: "تختارين قالباً (مطابقة، عجلة عشوائية، اختبار تلفزيوني...) وتلصقين الأسئلة وتشاركين الرابط أو تعرضينها على السبورة", why: "يحول المحتوى إلى ألعاب جاهزة بالنقاط والوقت دون برمجة" },
     { name: "Kahoot!", role: "مسابقة صفية جماعية", action: "تنشئين مسابقة بالأسئلة ويشارك المتعلمون عبر رمز اللعبة", why: "يضيف روح التنافس ولوحة متصدرين مباشرة" },
   ],
