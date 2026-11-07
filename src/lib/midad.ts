@@ -260,7 +260,38 @@ export function buildPrompt(d: TaskData): string {
   ].join("\n");
 }
 
-export interface Tool { name: string; role: string; action: string; why: string }
+export interface Tool { name: string; role: string; action: string; why: string; url?: string }
+
+// Official app websites for the visit buttons and logos.
+export const TOOL_URLS: Record<string, string> = {
+  ChatGPT: "https://chatgpt.com", Gemini: "https://gemini.google.com", NotebookLM: "https://notebooklm.google.com",
+  Canva: "https://www.canva.com", Gamma: "https://gamma.app", Lovable: "https://lovable.dev",
+  Genially: "https://genially.com", Quizizz: "https://wayground.com", "Kahoot!": "https://kahoot.com",
+  "Microsoft Word": "https://www.microsoft.com/microsoft-365/word", "Microsoft PowerPoint": "https://www.microsoft.com/microsoft-365/powerpoint",
+  "Google Forms": "https://docs.google.com/forms", Wordwall: "https://wordwall.net", "Google Flow": "https://labs.google/flow",
+  "Google Vids": "https://vids.google.com",
+};
+
+export function toolUrl(name: string) { return TOOL_URLS[name] ?? "https://www.google.com/search?q=" + encodeURIComponent(name); }
+export function toolLogo(name: string) {
+  const host = new URL(toolUrl(name)).hostname;
+  return `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
+}
+
+// Ready prompt for a specific app, tied to the teacher's subject, grade and lesson.
+export function toolPrompt(t: Tool, d: TaskData): string {
+  if (t.name === "ChatGPT") return buildPrompt(d);
+  const lang = d.lang === "en" ? "English" : "العربية";
+  const lesson = `«${d.title.trim()}» – ${d.subject} – ${d.grade}`;
+  const goals = goalList(d.goals).join("؛ ");
+  return [
+    `استخدم ${t.name} في هذه المهمة: ${t.role}.`,
+    `الدرس: ${lesson}. لغة المورد: ${lang}.`,
+    `الأهداف: ${goals}.`,
+    `المطلوب: ${t.action}.`,
+    `اجعل الناتج مناسباً لمتعلمين في ${d.grade} بلغة بسيطة وتصميم واضح وجذاب ومن دون أخطاء.`,
+  ].join("\n");
+}
 
 export const TOOLS: Record<StudioId, Tool[]> = {
   worksheets: [
