@@ -30,3 +30,4 @@ use the editor.
 <!-- LOVABLE:END -->
 
 - Midad data, prompt builders, tools and localStorage helpers live in src/lib/midad.ts; routes stay presentational so prompt rules are testable in one place.
+- Studio illustrations map lives in src/lib/studio-images.ts so src/lib/midad.ts stays free of image imports and easy to test.

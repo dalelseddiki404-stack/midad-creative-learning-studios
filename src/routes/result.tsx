@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { LANGS, STUDIOS, TOOLS, buildPrompt, copyText, isComplete, loadDraft, saveDraft, studioName, toolsText, upsertTask, type Draft, type TaskData } from "@/lib/midad";
+import { LANGS, STUDIOS, TOOLS, buildPrompt, copyText, isComplete, loadDraft, saveDraft, studioName, toolLogo, toolPrompt, toolUrl, toolsText, upsertTask, type Draft, type TaskData } from "@/lib/midad";
 
 export const Route = createFileRoute("/result")({
   head: () => ({
@@ -84,11 +84,13 @@ function Result() {
           <h2 className="font-display text-xl font-extrabold text-primary">🧰 الأدوات والتطبيقات المقترحة لتنفيذ مهمتك</h2>
           <button onClick={() => copy(toolsText(task.studio), "تم نسخ الأدوات المقترحة")} className="rounded-full bg-secondary px-5 py-2 font-bold text-secondary-foreground hover:opacity-90">📋 نسخ الأدوات المقترحة</button>
         </div>
+        <p className="mb-4 text-sm text-muted-foreground">المسار المقترح: ابدئي بالتطبيق الأول ثم انتقلي بالترتيب، فلكل تطبيق دور مختلف في إنجاز المهمة.</p>
         <div className="grid gap-4 md:grid-cols-2">
           {TOOLS[task.studio].map((t, i) => (
             <div key={t.name} className="game-card p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-grad text-sm font-extrabold text-gold-foreground">{i + 1}</span>
+              <div className="mb-3 flex items-center gap-3">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold-grad text-sm font-extrabold text-gold-foreground">{i + 1}</span>
+                <img src={toolLogo(t.name)} alt={`شعار ${t.name}`} width={36} height={36} loading="lazy" className="h-9 w-9 rounded-lg bg-card object-contain" />
                 <h3 dir="ltr" className="font-display text-lg font-extrabold text-primary">{t.name}</h3>
               </div>
               <ul className="space-y-2 text-sm leading-relaxed">
@@ -96,6 +98,10 @@ function Result() {
                 <li><b className="text-accent">ماذا ستفعلين:</b> {t.action}</li>
                 <li><b className="text-accent">لماذا اخترناه:</b> {t.why}</li>
               </ul>
+              <div className="mt-4 flex flex-wrap gap-2 text-sm font-bold">
+                <a href={toolUrl(t.name)} target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary px-4 py-2 text-primary-foreground hover:opacity-90">زيارة التطبيق ↗</a>
+                <button onClick={() => copy(toolPrompt(t, task), `تم نسخ أمر ${t.name}`)} className="rounded-full bg-secondary px-4 py-2 text-secondary-foreground hover:opacity-90">📋 نسخ الأمر الجاهز</button>
+              </div>
             </div>
           ))}
         </div>
