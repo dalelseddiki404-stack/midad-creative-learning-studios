@@ -1,5 +1,6 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { STUDIO_IMAGES } from "@/lib/studio-images";
 import { Progress } from "@/components/Shell";
 import { GRADES, LANGS, STUDIOS, SUBJECTS, isComplete, loadDraft, saveDraft, type Draft, type Lang, type StudioId } from "@/lib/midad";
 
@@ -83,7 +84,7 @@ function Setup() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6 flex items-center gap-3">
-        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-hero text-3xl shadow-card">{studio.icon}</span>
+        <img src={STUDIO_IMAGES[studio.id]} alt={studio.name} width={1024} height={768} className="h-20 w-28 shrink-0 rounded-2xl object-cover shadow-card" />
         <div>
           <p className="text-sm font-bold text-accent">{studio.name}</p>
           <h1 className="font-display text-3xl font-extrabold text-primary">لنجهّز مهمتك التعليمية</h1>
