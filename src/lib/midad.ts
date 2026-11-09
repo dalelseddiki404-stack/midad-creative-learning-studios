@@ -1,4 +1,4 @@
-export type StudioId = "worksheets" | "presentations" | "assessment" | "games" | "video" | "design";
+export type StudioId = "worksheets" | "presentations" | "assessment" | "games" | "video" | "design" | "planning";
 export type Lang = "ar" | "en";
 
 export const STUDIOS: { id: StudioId; name: string; icon: string; desc: string }[] = [
@@ -7,6 +7,7 @@ export const STUDIOS: { id: StudioId; name: string; icon: string; desc: string }
   { id: "assessment", name: "استوديو الاختبارات والتقويم", icon: "✅", desc: "اختبار متوازن مع دليل تصحيح" },
   { id: "games", name: "استوديو الألعاب التعليمية", icon: "🎲", desc: "مراحل وتحديات ونقاط وتحفيز" },
   { id: "video", name: "استوديو الفيديو التعليمي", icon: "🎬", desc: "سيناريو ومشاهد وتعليق صوتي" },
+  { id: "planning", name: "استوديو التخطيط والتحضير", icon: "📋", desc: "من أهدافك التعليمية إلى حصة منظمة وممتعة" },
   { id: "design", name: "استوديو التصميم والإنفوجرافيك", icon: "🎨", desc: "تنظيم بصري جذاب للمعلومات" },
 ];
 
@@ -54,6 +55,12 @@ export interface TaskData {
   lang: Lang | "";
   title: string;
   goals: string;
+  content?: string;
+  constraints?: string;
+  duration?: number;
+  learners?: number;
+  gamePath?: string;
+  workflow?: WorkflowState;
 }
 
 export function isComplete(d: Partial<TaskData>): d is TaskData {
@@ -69,6 +76,12 @@ function goalList(goals: string) {
 }
 
 const STUDIO_BODY: Record<StudioId, { ar: string[]; en: string[]; roleAr: string; roleEn: string; taskAr: string; taskEn: string }> = {
+  planning: {
+    roleAr: "خبيرة إعداد تحضير الدروس وتنظيم الحصص", roleEn: "an expert lesson preparation teacher",
+    taskAr: "أعدّ تحضير درس عملياً متسلسلاً", taskEn: "Prepare a practical sequenced lesson plan",
+    ar: ["حافظ على أهداف المعلمة حرفياً، ولا تعدّلها أو تقترح أهدافاً جديدة.", "نظّم التهيئة وسير الدرس وإجراءات المعلمة والمتعلمين والاستراتيجيات والأنشطة والوسائل والتقويم والغلق.", "وزّع زمن الحصة في جدول: مرحلة الدرس، الزمن، إجراءات المعلمة، إجراءات المتعلمين، الاستراتيجية، الوسائل، التقويم.", "لا تخترع محتوى علمياً خارج المصدر أو بيانات المعلمة؛ وضّح أي نقص في المعلومات."],
+    en: ["Preserve the teacher objectives verbatim; never reword or invent objectives.", "Include warm-up, lesson sequence, teacher and learner actions, strategies, activities, materials, checks and closure.", "Provide a timing table with stage, time, teacher actions, learner actions, strategy, materials and assessment.", "Do not invent scientific content beyond the supplied sources."],
+  },
   worksheets: {
     roleAr: "مصممة مناهج خبيرة في إعداد أوراق العمل للمرحلة الابتدائية",
     roleEn: "an expert curriculum designer specialised in primary-school worksheets",
@@ -207,7 +220,7 @@ const STUDIO_BODY: Record<StudioId, { ar: string[]; en: string[]; roleAr: string
 
 export function buildPrompt(d: TaskData): string {
   const b = STUDIO_BODY[d.studio];
-  const goals = goalList(d.goals);
+  const goals = d.studio === "planning" ? [d.goals] : goalList(d.goals);
   const hint = SUBJECT_HINT[d.subject] ?? ["", ""];
   const age = AGE[d.grade] ?? ["", ""];
   if (d.lang === "en") {
@@ -222,13 +235,17 @@ export function buildPrompt(d: TaskData): string {
       `- Learning objective(s) (use exactly these, do not add new ones):`,
       ...goals.map((g, i) => `  ${i + 1}. ${g}`),
       ``,
+      `Scientific content: ${d.content || "Not supplied; identify missing source information rather than inventing it."}`,
+      `Constraints: ${d.constraints || "None added"}`,
+      ...(d.duration ? [`Lesson duration: ${d.duration} minutes`] : []),
+      ...(d.learners ? [`Learners: ${d.learners}`] : []),
       `Requirements:`,
       ...b.en.map((x) => `- ${x}`),
       ``,
       `Subject-specific guidance: ${hint[1]}`,
       ``,
       `General rules:`,
-      `- Do not invent objectives beyond those listed; you may suggest a clearer wording at the start without changing their meaning.`,
+      d.studio === "planning" ? `- Preserve the objectives verbatim. Do not reword or suggest new objectives.` : `- Do not invent objectives beyond those listed; you may suggest a clearer wording at the start without changing their meaning.`,
       `- Do not show answers in learner-facing materials unless I explicitly ask.`,
       `- Keep the language simple and suitable for ${GRADE_EN[d.grade]}.`,
       `- Present the output in clearly titled, editable sections so I can modify it easily.`,
@@ -246,13 +263,17 @@ export function buildPrompt(d: TaskData): string {
     `- الهدف/الأهداف التعليمية (التزم بها كما هي ولا تضف أهدافاً جديدة):`,
     ...goals.map((g, i) => `  ${i + 1}. ${g}`),
     ``,
+    `المحتوى العلمي: ${d.content || "غير مرفق؛ وضّح المعلومات التي تحتاج إلى مصدر ولا تخترعها."}`,
+    `الشروط التعليمية: ${d.constraints || "لا شروط إضافية"}`,
+    ...(d.duration ? [`مدة الحصة: ${d.duration} دقيقة`] : []),
+    ...(d.learners ? [`عدد المتعلمين: ${d.learners}`] : []),
     `المطلوب:`,
     ...b.ar.map((x) => `- ${x}`),
     ``,
     `توجيه خاص بطبيعة المادة: ${hint[0]}`,
     ``,
     `قواعد عامة:`,
-    `- لا تخترع أهدافاً غير المذكورة، ويمكنك في البداية اقتراح صياغة أوضح لها دون تغيير معناها.`,
+    d.studio === "planning" ? `- حافظ على أهداف المعلمة حرفياً دون تعديل أو اقتراح أهداف جديدة.` : `- لا تخترع أهدافاً غير المذكورة، ويمكنك في البداية اقتراح صياغة أوضح لها دون تغيير معناها.`,
     `- لا تعرض الإجابات في المواد الموجهة للمتعلم إلا إذا طلبتُ ذلك صراحة.`,
     `- استخدم لغة بسيطة مناسبة لمتعلمي ${d.grade}.`,
     `- قدّم الناتج في أقسام معنونة وواضحة قابلة للتعديل بسهولة.`,
@@ -266,7 +287,7 @@ export interface Tool { name: string; role: string; action: string; why: string;
 export const TOOL_URLS: Record<string, string> = {
   ChatGPT: "https://chatgpt.com", Gemini: "https://gemini.google.com", NotebookLM: "https://notebooklm.google.com",
   Canva: "https://www.canva.com", Gamma: "https://gamma.app", Lovable: "https://lovable.dev",
-  Genially: "https://genially.com", Quizizz: "https://wayground.com", "Kahoot!": "https://kahoot.com",
+  Genially: "https://genially.com", Quizizz: "https://quizizz.com/", "Kahoot!": "https://kahoot.com",
   "Microsoft Word": "https://www.microsoft.com/microsoft-365/word", "Microsoft PowerPoint": "https://www.microsoft.com/microsoft-365/powerpoint",
   "Google Forms": "https://docs.google.com/forms", Wordwall: "https://wordwall.net", "Google Flow": "https://labs.google/flow",
   "Google Vids": "https://vids.google.com",
@@ -294,6 +315,10 @@ export function toolPrompt(t: Tool, d: TaskData): string {
 }
 
 export const TOOLS: Record<StudioId, Tool[]> = {
+  planning: [
+    { name: "NotebookLM", role: "تحليل مصادر الدرس", action: "ترفعين المصدر وتستخرجين المفاهيم والأمثلة وتسلسل المحتوى", why: "يعتمد على الملفات التي تقدمينها فقط" },
+    { name: "ChatGPT", role: "إعداد التحضير وتنظيم سير الحصة", action: "تنظمين الإجراءات والاستراتيجيات والأنشطة والزمن والخطة النهائية", why: "يجمع التحضير في تسلسل واضح قابل للتعديل" },
+  ],
   worksheets: [
     { name: "ChatGPT", role: "توليد محتوى ورقة العمل", action: "تلصقين البرومبت وتراجعين الأنشطة والتعليمات وتطلبين التعديل", why: "يكتب محتوى متدرجاً ومنظماً بسرعة ويقبل التعديل بالمحادثة" },
     { name: "Gemini", role: "تطوير الأفكار والرسومات والمحتوى", action: "تطلبين أفكار أنشطة بديلة ووصف رسومات مناسبة للدرس", why: "يقترح أفكاراً متنوعة ويساعد في الصور التوضيحية" },
@@ -317,6 +342,7 @@ export const TOOLS: Record<StudioId, Tool[]> = {
     { name: "Microsoft Word", role: "إعداد النسخة الورقية", action: "تنسقين نسخة المتعلم للطباعة وتحفظين دليل الإجابة في ملف منفصل", why: "مناسب للاختبارات الورقية ويحافظ على فصل نسخة المعلمة" },
   ],
   games: [
+    { name: "Canva", role: "نشاط لعب أو نقر وتنقل", action: "تصممين صفحات وروابط داخلية وأزراراً بحسب ميزات حسابك", why: "مناسب للأنشطة البسيطة؛ ليس بديلاً تلقائياً للعبة برمجية متكاملة" },
     { name: "ChatGPT", role: "تصميم فكرة اللعبة وقواعدها وأسئلتها", action: "تلصقين البرومبت وتحصلين على المراحل والتحديات والأسئلة الجاهزة", why: "يبتكر قصة اللعبة ويصوغ التحديات حسب الأهداف" },
     { name: "Gemini", role: "تطوير الأفكار والعناصر البصرية والبرمجة", action: "تطلبين شخصيات وتصميماً بصرياً للعبة ومساعدة في الأوامر", why: "يساعد في الجانب البصري والبرمجي للعبة" },
     { name: "Lovable", role: "بناء لعبة تعليمية تفاعلية بالوصف", action: "تصفين فكرة اللعبة ومراحلها وأسئلتها باللغة العادية فيبني لعبة ويب جاهزة", why: "يبني تطبيقات وألعاب حقيقية دون برمجة"},
@@ -360,7 +386,8 @@ export function loadTasks(): SavedTask[] {
 }
 export function upsertTask(d: TaskData, id?: string): SavedTask {
   const tasks = loadTasks();
-  const task: SavedTask = { ...d, id: id || crypto.randomUUID(), savedAt: Date.now() };
+  const previous = tasks.find((t) => t.id === id);
+  const task: SavedTask = { ...previous, ...d, id: id || crypto.randomUUID(), savedAt: Date.now() };
   const i = tasks.findIndex((t) => t.id === task.id);
   if (i >= 0) tasks[i] = task; else tasks.unshift(task);
   localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
