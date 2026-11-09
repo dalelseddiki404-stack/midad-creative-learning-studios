@@ -403,3 +403,87 @@ export async function copyText(text: string) {
     const ok = document.execCommand("copy"); ta.remove(); return ok;
   }
 }
+
+// Chained manual workflows. Persisted task snapshots remain backwards compatible.
+export interface Stage { id: string; name: string; app: string; goal: string; action: string; expected: string; next: string; optional?: boolean }
+export interface StageOutput { text: string; signature: string; savedAt: number; skipped?: boolean }
+export interface WorkflowState { current: number; outputs: Record<string, StageOutput>; drafts?: Record<string, string> }
+const stage = (id: string, name: string, app: string, goal: string, action: string, expected: string, optional = false): Stage => ({ id, name, app, goal, action, expected, optional, next: `يُستخدم ${expected} أساساً للعمل في المرحلة التالية مع بيانات الدرس الأصلية.` });
+export const GAME_PATHS = [
+  { id: 'canva', app: 'Canva', name: 'نشاط بأسلوب لعبة / نقر وتنقل', why: 'صفحات وأزرار وروابط داخلية؛ لا يفترض نقاطاً أو تحققاً برمجياً تلقائياً.' },
+  { id: 'gemini', app: 'Gemini', name: 'نموذج تفاعلي أو كود', why: 'تطوير نموذج أو كود، بحسب إمكانات الحساب وبيئة التشغيل؛ يلزم تجربته.' },
+  { id: 'genially', app: 'Genially', name: 'غرفة هروب واستكشاف', why: 'تفاعلات بصرية وقوالب مغامرات تعتمد على النقر والاستكشاف.' },
+  { id: 'wordwall', app: 'Wordwall', name: 'مراجعة سريعة', why: 'مطابقة وعجلة ومتاهة وأسئلة ضمن قوالب جاهزة.' },
+  { id: 'kahoot', app: 'Kahoot!', name: 'مسابقة صفية مباشرة', why: 'تنافس جماعي ورمز مشاركة ونتائج مباشرة.' },
+  { id: 'lovable', app: 'Lovable', name: 'لعبة رقمية متكاملة', why: 'مراحل ونقاط وتحقق من الإجابات وتغذية راجعة فورية في لعبة ويب.' },
+];
+export function workflowStages(d: TaskData): Stage[] {
+  switch (d.studio) {
+    case 'planning': return [
+      stage('source', 'تحليل الدرس والمصدر', 'NotebookLM', 'فهم المحتوى من مصدرك دون اختراع معلومات', 'ارفعي الكتاب أو الملفات في NotebookLM واستخرجي المفاهيم والمعلومات والأمثلة وتسلسل المحتوى والنقاط التي تحتاج شرحاً والأنشطة الموجودة. لا تنشئ أهدافاً.', 'ملخص منظم موثق للمصدر', true),
+      stage('sequence', 'إعداد سير الدرس', 'ChatGPT', 'بناء تسلسل الحصة من التهيئة إلى الختام', 'حدّد إجراءات المعلمة والمتعلمين، الأسئلة التمهيدية والموجهة والانتقالات، بما يحقق أهداف المعلمة كما هي.', 'مسودة سير درس متسلسل'),
+      stage('activities', 'الاستراتيجيات والأنشطة والوسائل', 'ChatGPT', 'اختيارات تربوية عملية مناسبة', 'اختر استراتيجيات قليلة مرتبطة بالأهداف، ووضّح تطبيقها وأنشطة فردية وثنائية وجماعية عند الحاجة ووسائل بسيطة متاحة دون الاعتماد الدائم على التقنية.', 'سير درس مطور بالأنشطة والوسائل'),
+      stage('timing', 'تنظيم التحضير وتوزيع الزمن', 'ChatGPT', 'تحضير قابل للتنفيذ في الوقت المتاح', 'وزّع مدة الحصة الحقيقية دون تجاوزها في جدول: المرحلة، الزمن، إجراءات المعلمة، إجراءات المتعلمين، الاستراتيجية، الوسائل، التقويم أو أسئلة التحقق.', 'جدول تحضير بتوزيع زمني واقعي'),
+      stage('final', 'إخراج التحضير النهائي', 'ChatGPT', 'تحضير مختصر متكامل للطباعة والتعديل', 'اجمع المادة والصف والعنوان والأهداف حرفياً والزمن والوسائل والاستراتيجيات والتهيئة وتسلسل الإجراءات والأنشطة والتقويم والغلق والواجب إن كان مناسباً. راجع الدقة والزمن ولا تضف أهدافاً.', 'تحضير درس نهائي قابل للطباعة'),
+    ];
+    case 'worksheets': return [
+      stage('analysis','تحليل الهدف والمحتوى','ChatGPT','تحديد المهارات المطلوبة','اربط المحتوى والأهداف بالمهارات المراد تدريبها دون إضافة أهداف.','خريطة مهارات'),
+      stage('outline','تخطيط الأنشطة والأسئلة','ChatGPT','تنويع الأنشطة','خطّط أنشطة قصيرة مرتبطة بكل هدف مع مساحات إجابة.','مخطط الأنشطة'),
+      stage('questions','صياغة التمارين المتدرجة','ChatGPT','أسئلة واضحة من السهل إلى الأصعب','اكتب التمارين والتعليمات وافصل الإجابات للمعلمة.','تمارين متدرجة ودليل إجابة منفصل'),
+      stage('layout','تصميم الورقة للطباعة','Canva','إخراج ورقة واضحة','انقلي المحتوى إلى قالب A4 وأضيفي الصور ومساحات الكتابة؛ استخدمي الوصف دليلاً للتصميم إن لم تتوفر ميزة توليد.','ورقة عمل مصممة أو رابطها'),
+      stage('review','مراجعة الدقة واللغة','ChatGPT','نسخة جاهزة للاستخدام','راجِع النص المرفق علمياً ولغوياً وتربوياً واذكر النواقص؛ لا تدّع فحص رابط أو صورة غير متاحة.','نسخة نهائية وملاحظات مراجعة'),
+    ];
+    case 'presentations': return [
+      stage('source','تحليل المحتوى والمصادر','NotebookLM','محتوى موثق','ارفعي المصادر واستخرجي الأفكار والأمثلة مع إحالات المصدر.','ملخص مصادر',true),
+      stage('outline','بناء مخطط العرض','ChatGPT','تسلسل من التمهيد للخلاصة','خطط عناوين الشرائح والأسئلة والانتقالات.','مخطط الشرائح'),
+      stage('writing','كتابة المحتوى التعليمي','ChatGPT','نص موجز وملاحظات المعلمة','اكتب محتوى كل شريحة وملاحظات المعلمة والإجابات في الملاحظات فقط.','محتوى الشرائح'),
+      stage('visuals','اقتراح العناصر البصرية','Gemini','صور مرتبطة بالمفهوم','اقترح وصفاً دقيقاً للصور في كل شريحة دون اختراع معلومات.','أوصاف العناصر البصرية'),
+      stage('design','تصميم العرض وإخراجه','Gamma','عرض قابل للتعديل','حوّل مخطط الشرائح والمحتوى إلى عرض وراجع دعم العربية؛ يتوقف التصدير على ميزات الحساب.','عرض أو رابط العرض'),
+      stage('review','مراجعة العرض النهائي','ChatGPT','التحقق من التسلسل والدقة','راجِع نص الشرائح وملاحظاتها وفق الأهداف وأبرز المعلومات غير المتاحة للمراجعة.','مراجعة نهائية للعرض'),
+    ];
+    case 'assessment': return [
+      stage('skills','تحديد مهارات التقويم','ChatGPT','قياس الأهداف المحددة','حدد المهارات ومستويات التفكير لكل هدف دون تغييره.','خريطة مهارات التقويم'),
+      stage('blueprint','جدول المواصفات','ChatGPT','توازن الأسئلة','أعد جدولاً يربط الأسئلة بالأهداف والدرجات ومستوى الصعوبة.','جدول مواصفات'),
+      stage('questions','صياغة الأسئلة المتنوعة','ChatGPT','اختبار واضح','اكتب الأسئلة ونسخة المتعلم ودليل التصحيح منفصلين.','أسئلة ومفتاح تصحيح'),
+      stage('create','إنشاء الاختبار','Quizizz','تقويم تفاعلي','انقلي الأسئلة ومفتاحها إلى اختبار؛ استخدمي أمر المرحلة لإعداد صيغة الاستيراد أو كدليل إدخال يدوي.','رابط الاختبار'),
+      stage('review','مراجعة الاختبار','ChatGPT','وضوح وعدالة التقويم','راجِع نص الأسئلة ومستوياتها والدرجات والإجابات.','اختبار مدقق'),
+      stage('results','تجهيز الاختبار وتحليل النتائج','ChatGPT','تجهيز الاستخدام والتغذية الراجعة','جهز نسخة الاستخدام؛ حلل نتائج فعلية فقط إن أرفقت، وإلا قدّم نموذج تحليل فارغاً دون اختراع درجات.','خطة استخدام وتحليل عند توفر النتائج'),
+    ];
+    case 'games': { const path = GAME_PATHS.find(p => p.id === d.gamePath) ?? GAME_PATHS[5]; return [
+      stage('idea','فكرة اللعبة والأهداف','ChatGPT','ربط اللعب بالتعلم','ابتكر فكرة وقصة بسيطة مرتبطة بأهداف المعلمة.','فكرة اللعبة'),
+      stage('rules','القواعد والمراحل والأسئلة','ChatGPT','تحديات مناسبة لنوع اللعبة','اكتب القواعد والأسئلة والإجابات والتغذية الراجعة وفق المسار المختار؛ لا تفترض قدرات غير متاحة في التطبيق.','قواعد وأسئلة اللعبة'),
+      stage('create',`إنشاء اللعبة في ${path.app}`,path.app,path.why,`نفّذ اللعبة باستخدام ${path.app} حسب إمكاناته الفعلية. ${path.why} استخدمي الأمر للتوليد إن توفر، وإلا كدليل إدخال وبناء يدوي.`,'لعبة أو كود أو رابطها'),
+      stage('review','مراجعة التفاعل والإجابات','ChatGPT','تجربة سليمة وتغذية راجعة','راجع المحتوى والقواعد وضع قائمة اختبار لكل تفاعل وإجابة؛ جرّبي اللعبة بنفسك ولا تدّع فحص رابط لا يمكن الوصول إليه.','قائمة اختبار ومراجعة'),
+      stage('release','تجهيز الاستخدام الصفي','ChatGPT','انطلاق مناسب للصف','جهز تعليمات المشاركة والزمن وتنظيم المتعلمين وبديل غير رقمي.','خطة تشغيل اللعبة صفياً'),
+    ]; }
+    case 'video': return [
+      stage('outline','تخطيط الفكرة والمشاهد','ChatGPT','تسلسل تعليمي قصير','حدد الفكرة وتسلسل المشاهد ومددها.','مخطط الفيديو'),
+      stage('script','السيناريو والتعليق الصوتي','ChatGPT','لغة مناسبة للعمر','اكتب المشاهد والتعليق ونصوص الشاشة وأوصاف التوليد.','سيناريو كامل'),
+      stage('scenes','إنتاج المشاهد','Google Flow','تجسيد المفاهيم بصرياً','استخدمي أوصاف المشاهد لتوليد المقاطع حسب ميزات الحساب مع الحفاظ على الاتساق.','أوصاف أو روابط المقاطع'),
+      stage('edit','التجميع والصوت','Google Vids','فيديو متسلسل','رتبي المشاهد وأضيفي الصوت والنصوص ثم صدّري بحسب ميزات الحساب؛ الأمر دليل مونتاج.','فيديو أو رابطه'),
+      stage('review','المراجعة النهائية','ChatGPT','الدقة والزمن','راجع السيناريو والتعليق وأعد قائمة تحقق بصرية وصوتية تنفذها المعلمة.','مراجعة وخطة عرض الفيديو'),
+    ];
+    case 'design': return [
+      stage('content','تحليل المعلومات وتنظيمها','ChatGPT','محتوى مختصر','نظم مفاهيم الدرس في أقسام مرتبطة بالأهداف.','خريطة المحتوى'),
+      stage('visual','التصور البصري','ChatGPT','وضوح المسار البصري','حدّد التسلسل والعناوين والأيقونات ومقاس الإخراج.','وصف التصميم'),
+      stage('create','تصميم الإنفوجرافيك','Canva','إخراج بصري قابل للطباعة','انقلي المحتوى إلى قالب واضح واضبطي النص والصور؛ استخدمي الأمر كدليل تصميم عند غياب التوليد.','تصميم أو رابطه'),
+      stage('review','المراجعة والتصدير','ChatGPT','معلومات صحيحة ومقروءة','راجع النص والأهداف وأعد قائمة لفحص وضوح الخطوط والمقاس والتصدير.','مراجعة التصميم النهائي'),
+    ];
+  }
+}
+export function workflowSignature(d: TaskData, stages: Stage[], index: number): string {
+  return JSON.stringify([d.studio,d.subject,d.grade,d.lang,d.title,d.goals,d.content,d.constraints,d.duration,d.learners,d.gamePath, ...stages.slice(0,index).map(s => { const o = d.workflow?.outputs[s.id]; return [s.id,o?.text,o?.skipped]; })]);
+}
+export function stageStale(d: TaskData, stages: Stage[], index: number): boolean { const o = d.workflow?.outputs[stages[index].id]; return !!o && !o.skipped && (o.signature !== workflowSignature(d,stages,index) || stages.slice(0,index).some((_,i) => stageStale(d,stages,i))); }
+export function buildStagePrompt(d: TaskData, index: number): string {
+  const stages = workflowStages(d), s = stages[index];
+  const previous = stages.slice(0,index).map(p => { const o = d.workflow?.outputs[p.id]; return o?.text ? `مخرجات «${p.name}»:\n${o.text}` : ''; }).filter(Boolean);
+  return [buildPrompt(d), '\n--- مهمة هذه المرحلة فقط ---', `التطبيق: ${s.app}. المرحلة ${index + 1}: ${s.name}`, `الهدف: ${s.goal}`, `المهمة: ${s.action}`, `المخرج المتوقع: ${s.expected}`, `نفّذ مهمة هذه المرحلة فقط، ولا تنفذ بقية مراحل المورد. حافظ على الأهداف والمعلومات العلمية والشروط الأصلية. لغة الناتج: ${d.lang === 'en' ? 'English' : 'العربية'}.`, d.studio === 'planning' ? `أهداف المعلمة حرفياً دون أي تعديل:\n${d.goals}\nلا تقترح أهدافاً جديدة ولا تخترع محتوى غير موجود في البيانات أو المصادر.` : '', d.studio === 'games' ? `مسار اللعبة: ${(GAME_PATHS.find(p=>p.id===d.gamePath) ?? GAME_PATHS[5]).why}` : '', ...previous].filter(Boolean).join('\n\n');
+}
+export function saveStageOutput(d: TaskData, index: number, text: string, skipped = false): TaskData {
+  const stages = workflowStages(d), s = stages[index];
+  if (skipped && !s.optional) throw new Error('هذه المرحلة ليست اختيارية');
+  if (!skipped && !text.trim()) throw new Error('ألصقي مخرج المرحلة أولاً');
+  return { ...d, workflow: { current:index, drafts:d.workflow?.drafts, outputs:{ ...d.workflow?.outputs, [s.id]:{text,skipped,signature:workflowSignature(d,stages,index),savedAt:Date.now()} } } };
+}
+export function workflowExport(d: TaskData): string { return [studioName(d.studio), d.title, `المادة: ${d.subject} | الصف: ${d.grade}`, `الأهداف كما أدخلتها المعلمة:\n${d.goals}`, ...workflowStages(d).map(s=>`${s.name}\n${d.workflow?.outputs[s.id]?.skipped ? 'مرحلة اختيارية تم تجاوزها' : d.workflow?.outputs[s.id]?.text || 'لم تُنجز بعد'}`)].join('\n\n'); }
