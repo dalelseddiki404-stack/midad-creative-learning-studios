@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { STUDIO_IMAGES } from "@/lib/studio-images";
@@ -26,7 +27,7 @@ function Picker({ label, icon, value, options, onPick }: { label: string; icon: 
   const name = options.find((o) => o.id === value)?.name;
   return (
     <div className="pop-in rounded-3xl border-2 border-border bg-card p-4 shadow-card">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-3 text-right" aria-expanded={open}>
+      <Button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-3 text-right" aria-expanded={open}>
         <span className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-secondary text-xl">{icon}</span>
           <span>
@@ -35,18 +36,18 @@ function Picker({ label, icon, value, options, onPick }: { label: string; icon: 
           </span>
         </span>
         <span className={`text-muted-foreground transition ${open ? "rotate-180" : ""}`}>▼</span>
-      </button>
+      </Button>
       {open && (
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {options.map((o) => (
-            <button
+            <Button
               key={o.id}
               type="button"
               onClick={() => { onPick(o.id); setOpen(false); }}
               className={`rounded-2xl border-2 px-3 py-3 text-sm font-bold transition hover:-translate-y-0.5 hover:border-accent ${value === o.id ? "border-accent bg-accent text-accent-foreground" : "border-border bg-background"}`}
             >
               {o.name}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -56,7 +57,7 @@ function Picker({ label, icon, value, options, onPick }: { label: string; icon: 
 
 function Setup() {
   const { studioId } = Route.useParams();
-  const studio = STUDIOS.find((s) => s.id === studioId)!;
+  const studio = STUDIOS.find((s) => s.id === studioId);
   const navigate = useNavigate();
   const [d, setD] = useState<Draft | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
@@ -69,17 +70,18 @@ function Setup() {
 
   const update = (patch: Partial<Draft>) => {
     setD((prev) => {
-      const next = { ...prev!, ...patch };
+      const next = { ...(prev ?? {}), ...patch };
       saveDraft(next);
       return next;
     });
     setTimeout(() => bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 80);
   };
 
+  if (!studio) return null;
   if (!d) return <div className="p-10 text-center text-muted-foreground">...</div>;
 
   const step = !d.subject ? 0 : !d.grade ? 1 : !d.lang ? 2 : !d.title?.trim() ? 3 : !d.goals?.trim() ? 4 : 6;
-  const ready = isComplete(d);
+  const ready = isComplete(d) && (studio.id !== "planning" || !!(d.duration && d.duration > 0));
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -123,14 +125,19 @@ function Setup() {
             />
           </label>
         )}
+        {d.goals?.trim() && <div className="space-y-4 border-t border-border py-4">
+          <label className="block font-bold">المحتوى العلمي أو نص الدرس (اختياري)<textarea value={d.content ?? ""} onChange={e=>update({content:e.target.value})} rows={4} className="mt-2 w-full rounded-lg border border-input bg-card p-3 font-normal" /></label>
+          <label className="block font-bold">الشروط والمعايير التعليمية (اختياري)<textarea value={d.constraints ?? ""} onChange={e=>update({constraints:e.target.value})} rows={3} className="mt-2 w-full rounded-lg border border-input bg-card p-3 font-normal" /></label>
+          {studio.id === "planning" && <div className="grid gap-4 sm:grid-cols-2"><label className="block font-bold">مدة الحصة بالدقائق<input type="number" min="1" value={d.duration ?? ""} onChange={e=>update({duration:Number(e.target.value)})} className="mt-2 w-full rounded-lg border border-input bg-card p-3" /></label><label className="block font-bold">عدد المتعلمين (اختياري)<input type="number" min="1" value={d.learners ?? ""} onChange={e=>update({learners:e.target.value ? Number(e.target.value) : undefined})} className="mt-2 w-full rounded-lg border border-input bg-card p-3" /></label></div>}
+        </div>}
         {ready && (
-          <button
+          <Button
             type="button"
             onClick={() => navigate({ to: "/result" })}
             className="pop-in w-full rounded-3xl bg-gold-grad px-6 py-5 font-display text-2xl font-extrabold text-gold-foreground shadow-glow transition hover:scale-[1.02] active:scale-95"
           >
             ✨ اضغطي هنا لمساعدتك
-          </button>
+          </Button>
         )}
         <div ref={bottom} />
       </div>

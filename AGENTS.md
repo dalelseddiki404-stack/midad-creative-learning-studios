@@ -31,3 +31,6 @@ use the editor.
 
 - Midad data, prompt builders, tools and localStorage helpers live in src/lib/midad.ts; routes stay presentational so prompt rules are testable in one place.
 - Studio illustrations map lives in src/lib/studio-images.ts so src/lib/midad.ts stays free of image imports and easy to test.
+
+- Manual workflow stage definitions, prompt derivation, dependency fingerprints and output transitions live in src/lib/midad.ts; presentation stays in Workflow so rules are unit-testable and old saved tasks remain compatible.
+- Signed-in workspace snapshots persist through the generated browser Cloud client with owner-scoped RLS; existing guest local tasks remain usable and can be explicitly copied to the account.

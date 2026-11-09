@@ -7,7 +7,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "MIDAD | مِداد – مداد الإبداع التربوي" },
-      { name: "description", content: "MIDAD – Creative Learning Studios: ستة استوديوهات تساعد المعلمة من الفكرة إلى المورد التعليمي." },
+      { name: "description", content: "MIDAD – Creative Learning Studios: استوديوهات متخصصة تساعد المعلمة من الفكرة إلى المورد التعليمي." },
       { property: "og:title", content: "MIDAD | مِداد – مداد الإبداع التربوي" },
       { property: "og:description", content: "من الفكرة إلى المورد التعليمي – Creative Learning Studios." },
       { property: "og:type", content: "website" },
