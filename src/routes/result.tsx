@@ -1,3 +1,7 @@
+import { Workflow } from "@/components/Workflow";
+import { Button } from "@/components/ui/button";
+import { saveCloudTask } from "@/lib/workspace-cloud";
+import { CloudAccess } from "@/components/CloudAccess";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -33,13 +37,22 @@ function Result() {
   }
   const task: TaskData = d;
   const prompt = buildPrompt(task);
-  const studio = STUDIOS.find((s) => s.id === task.studio)!;
+  const studio = STUDIOS.find((s) => s.id === task.studio);
+  if (!studio) return null;
 
-  const save = () => {
+  const persist = (updated: TaskData) => {
+    try {
+      const saved = upsertTask(updated, d.taskId);
+      const next = { ...updated, taskId: saved.id };
+      saveDraft(next); setD(next);
+      void saveCloudTask(saved).catch(() => toast.error("محفوظ على الجهاز؛ تعذر الحفظ لحسابك، أعيدي المحاولة بزر حفظ مهمتي"));
+    } catch { toast.error("تعذر حفظ البيانات على الجهاز؛ نزّلي نسخة من عملك"); }
+  };
+  const save = async () => {
     const saved = upsertTask(task, (d as Draft).taskId);
     const next = { ...d, taskId: saved.id };
     saveDraft(next); setD(next);
-    toast.success("تم حفظ مهمتك في مكتب مهامي");
+    try { const cloud = await saveCloudTask(saved); toast.success(cloud ? "تم حفظ مهمتك على الجهاز ولحسابك" : "تم حفظ مهمتك على هذا الجهاز"); } catch { toast.error("محفوظ على الجهاز؛ تعذر الحفظ لحسابك، أعيدي المحاولة"); }
   };
   const copy = async (text: string, msg: string) => toast[(await copyText(text)) ? "success" : "error"](msg);
 
@@ -55,6 +68,7 @@ function Result() {
         <h1 className="mt-2 font-display text-3xl font-extrabold md:text-4xl">أحسنتِ! أصبحت مهمتك جاهزة للانطلاق</h1>
       </div>
 
+      <CloudAccess />
       <section className="mb-8 rounded-3xl border-2 border-border bg-card p-6 shadow-card">
         <h2 className="mb-4 font-display text-xl font-extrabold text-primary">📋 ملخص اختياراتك</h2>
         <dl className="grid gap-3 sm:grid-cols-2">
@@ -73,16 +87,17 @@ function Result() {
 
       <section className="mb-8 rounded-3xl border-2 border-accent bg-card p-6 shadow-card">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-xl font-extrabold text-primary">{studio.icon} البرومبت الخاص – {studio.name}</h2>
-          <button onClick={() => copy(prompt, "تم نسخ البرومبت")} className="rounded-full bg-accent px-5 py-2 font-bold text-accent-foreground hover:opacity-90">📋 نسخ البرومبت</button>
+          <h2 className="font-display text-xl font-extrabold text-primary">{studio.icon} الأمر الأساسي Master Prompt – {studio.name}</h2>
+          <Button onClick={() => copy(prompt, "تم نسخ البرومبت")} className="rounded-full bg-accent px-5 py-2 font-bold text-accent-foreground hover:opacity-90">📋 نسخ الأمر الأساسي</Button>
         </div>
         <pre dir={task.lang === "en" ? "ltr" : "rtl"} className={`max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted p-5 font-sans text-sm leading-loose ${task.lang === "en" ? "text-left" : "text-right"}`}>{prompt}</pre>
       </section>
 
+      <Workflow task={task} onChange={persist} />
       <section className="mb-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-xl font-extrabold text-primary">🧰 الأدوات والتطبيقات المقترحة لتنفيذ مهمتك</h2>
-          <button onClick={() => copy(toolsText(task.studio), "تم نسخ الأدوات المقترحة")} className="rounded-full bg-secondary px-5 py-2 font-bold text-secondary-foreground hover:opacity-90">📋 نسخ الأدوات المقترحة</button>
+          <Button onClick={() => copy(toolsText(task.studio), "تم نسخ الأدوات المقترحة")} className="rounded-full bg-secondary px-5 py-2 font-bold text-secondary-foreground hover:opacity-90">📋 نسخ الأدوات المقترحة</Button>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">المسار المقترح: ابدئي بالتطبيق الأول ثم انتقلي بالترتيب، فلكل تطبيق دور مختلف في إنجاز المهمة.</p>
         <div className="grid gap-4 md:grid-cols-2">
@@ -100,7 +115,7 @@ function Result() {
               </ul>
               <div className="mt-4 flex flex-wrap gap-2 text-sm font-bold">
                 <a href={toolUrl(t.name)} target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary px-4 py-2 text-primary-foreground hover:opacity-90">زيارة التطبيق ↗</a>
-                <button onClick={() => copy(toolPrompt(t, task), `تم نسخ أمر ${t.name}`)} className="rounded-full bg-secondary px-4 py-2 text-secondary-foreground hover:opacity-90">📋 نسخ الأمر الجاهز</button>
+                <Button onClick={() => copy(toolPrompt(t, task), `تم نسخ أمر ${t.name}`)} className="rounded-full bg-secondary px-4 py-2 text-secondary-foreground hover:opacity-90">📋 نسخ الأمر الجاهز</Button>
               </div>
             </div>
           ))}
@@ -108,8 +123,8 @@ function Result() {
       </section>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <button onClick={save} className="rounded-2xl bg-gold-grad px-4 py-4 font-display text-lg font-extrabold text-gold-foreground shadow-card hover:scale-[1.02]">💾 حفظ مهمتي</button>
-        <button onClick={() => navigate({ to: "/studio/$studioId", params: { studioId: task.studio } })} className="rounded-2xl bg-primary px-4 py-4 font-bold text-primary-foreground hover:opacity-90">✏️ تعديل بيانات المهمة</button>
+        <Button onClick={save} className="rounded-2xl bg-gold-grad px-4 py-4 font-display text-lg font-extrabold text-gold-foreground shadow-card hover:scale-[1.02]">💾 حفظ مهمتي</Button>
+        <Button onClick={() => navigate({ to: "/studio/$studioId", params: { studioId: task.studio } })} className="rounded-2xl bg-primary px-4 py-4 font-bold text-primary-foreground hover:opacity-90">✏️ تعديل بيانات المهمة</Button>
         <Link to="/" className="rounded-2xl border-2 border-primary px-4 py-4 text-center font-bold text-primary hover:bg-secondary">🏠 العودة إلى الاستوديوهات</Link>
       </div>
     </div>
