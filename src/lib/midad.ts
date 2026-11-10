@@ -1,11 +1,12 @@
 export type StudioId = "worksheets" | "presentations" | "assessment" | "games" | "video" | "design" | "planning";
 export type Lang = "ar" | "en";
+import type { GameState } from "@/lib/games";
 
 export const STUDIOS: { id: StudioId; name: string; icon: string; desc: string }[] = [
   { id: "worksheets", name: "استوديو أوراق العمل", icon: "📝", desc: "أنشطة متدرجة وتعليمات واضحة" },
   { id: "presentations", name: "استوديو العروض التقديمية", icon: "🖥️", desc: "شرائح متسلسلة من التمهيد إلى الخلاصة" },
   { id: "assessment", name: "استوديو الاختبارات والتقويم", icon: "✅", desc: "اختبار متوازن مع دليل تصحيح" },
-  { id: "games", name: "استوديو الألعاب التعليمية", icon: "🎲", desc: "مراحل وتحديات ونقاط وتحفيز" },
+  { id: "games", name: "استوديو الألعاب التفاعلية", icon: "🎮", desc: "برومتات تنفيذية لبناء ألعاب رقمية تفاعلية حقيقية" },
   { id: "video", name: "استوديو الفيديو التعليمي", icon: "🎬", desc: "سيناريو ومشاهد وتعليق صوتي" },
   { id: "planning", name: "استوديو التخطيط والتحضير", icon: "📋", desc: "من أهدافك التعليمية إلى حصة منظمة وممتعة" },
   { id: "design", name: "استوديو التصميم والإنفوجرافيك", icon: "🎨", desc: "تنظيم بصري جذاب للمعلومات" },
@@ -60,6 +61,7 @@ export interface TaskData {
   duration?: number;
   learners?: number | undefined;
   gamePath?: string;
+  game?: GameState | undefined;
   workflow?: WorkflowState;
 }
 
@@ -67,11 +69,15 @@ export function isComplete(d: Partial<TaskData>): d is TaskData {
   return !!(d.studio && d.subject && d.grade && d.lang && d.title?.trim() && d.goals?.trim());
 }
 
+export function subjectLabel(subject: string, lang: Lang | "") { return lang === "en" ? SUBJECT_EN[subject] ?? subject : subject; }
+export function gradeLabel(grade: string, lang: Lang | "") { return lang === "en" ? GRADE_EN[grade] ?? grade : grade; }
+export function ageLabel(grade: string, lang: Lang | "") { return (AGE[grade] ?? ["", ""])[lang === "en" ? 1 : 0]; }
+
 export function studioName(id: StudioId) {
   return STUDIOS.find((s) => s.id === id)?.name ?? "";
 }
 
-function goalList(goals: string) {
+export function goalList(goals: string) {
   return goals.split(/\n+/).map((g) => g.replace(/^[\s\-•*\d.)٠-٩]+/, "").trim()).filter(Boolean);
 }
 
