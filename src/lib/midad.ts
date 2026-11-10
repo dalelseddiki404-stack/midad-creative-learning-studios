@@ -486,6 +486,7 @@ export function saveStageOutput(d: TaskData, index: number, text: string, skippe
   if (!s) throw new Error("مرحلة غير موجودة");
   if (skipped && !s.optional) throw new Error('هذه المرحلة ليست اختيارية');
   if (!skipped && !text.trim()) throw new Error('ألصقي مخرج المرحلة أولاً');
-  return { ...d, workflow: { current:index, drafts:d.workflow?.drafts, outputs:{ ...d.workflow?.outputs, [s.id]:{text,skipped,signature:workflowSignature(d,stages,index),savedAt:Date.now()} } } };
+  const retainedText = skipped ? (d.workflow?.outputs[s.id]?.text ?? text) : text;
+  return { ...d, workflow: { current:index, drafts:d.workflow?.drafts, outputs:{ ...d.workflow?.outputs, [s.id]:{text:retainedText,skipped,signature:workflowSignature(d,stages,index),savedAt:Date.now()} } } };
 }
 export function workflowExport(d: TaskData): string { return [studioName(d.studio), d.title, `المادة: ${d.subject} | الصف: ${d.grade}`, `الأهداف كما أدخلتها المعلمة:\n${d.goals}`, ...workflowStages(d).map(s=>`${s.name}\n${d.workflow?.outputs[s.id]?.skipped ? 'مرحلة اختيارية تم تجاوزها' : d.workflow?.outputs[s.id]?.text || 'لم تُنجز بعد'}`)].join('\n\n'); }

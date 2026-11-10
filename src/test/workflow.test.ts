@@ -3,6 +3,7 @@ import { GAME_PATHS, buildStagePrompt, buildPrompt, saveStageOutput, stageStale,
 
 const base: TaskData = {studio:'planning',subject:'أحب عربي',grade:'الصف الثاني',lang:'ar',title:'الجملة الاسمية',goals:'- أن يميز المتعلم المبتدأ\n٢. أن يحدد الخبر',content:'الجملة الاسمية تتكون من مبتدأ وخبر',constraints:'وسائل ورقية فقط',duration:40};
 describe('manual studio workflows',()=>{
+  it('skipping source analysis retains its previously saved work',()=>{const d=saveStageOutput(base,0,'ملخص مصدر محفوظ');const skipped=saveStageOutput(d,0,'',true);expect(skipped.workflow?.outputs['source']?.text).toBe('ملخص مصدر محفوظ');});
   it('planning only uses NotebookLM and ChatGPT in five stages',()=>{const s=workflowStages(base);expect(s).toHaveLength(5);expect([...new Set(s.map(p=>p.app))]).toEqual(['NotebookLM','ChatGPT']);});
   it('planning keeps the teacher objectives verbatim',()=>{expect(buildPrompt(base)).toContain(base.goals);expect(buildStagePrompt(base,4)).toContain(base.goals);expect(buildPrompt(base)).not.toContain('اقتراح صياغة أوضح');});
   it('planning source analysis is optional, other stages cannot be skipped',()=>{const d=saveStageOutput(base,0,'',true);expect(d.workflow?.outputs['source']?.skipped).toBe(true);expect(()=>saveStageOutput(base,1,'',true)).toThrow();});
