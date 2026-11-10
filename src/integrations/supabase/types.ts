@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      game_library: {
+        Row: {
+          created_at: string
+          game_name: string
+          game_type: string
+          goals: string
+          grade: string
+          id: string
+          lesson: Json
+          lesson_title: string
+          platform: string
+          prompt: string
+          settings: Json
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_name: string
+          game_type: string
+          goals: string
+          grade: string
+          id?: string
+          lesson?: Json
+          lesson_title: string
+          platform: string
+          prompt: string
+          settings?: Json
+          subject: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          game_name?: string
+          game_type?: string
+          goals?: string
+          grade?: string
+          id?: string
+          lesson?: Json
+          lesson_title?: string
+          platform?: string
+          prompt?: string
+          settings?: Json
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       midad_workspaces: {
         Row: {
           data: Json
