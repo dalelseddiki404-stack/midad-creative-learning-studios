@@ -58,7 +58,7 @@ export interface TaskData {
   content?: string;
   constraints?: string;
   duration?: number;
-  learners?: number;
+  learners?: number | undefined;
   gamePath?: string;
   workflow?: WorkflowState;
 }
@@ -407,7 +407,7 @@ export async function copyText(text: string) {
 // Chained manual workflows. Persisted task snapshots remain backwards compatible.
 export interface Stage { id: string; name: string; app: string; goal: string; action: string; expected: string; next: string; optional?: boolean }
 export interface StageOutput { text: string; signature: string; savedAt: number; skipped?: boolean }
-export interface WorkflowState { current: number; outputs: Record<string, StageOutput>; drafts?: Record<string, string> }
+export interface WorkflowState { current: number; outputs: Record<string, StageOutput>; drafts?: Record<string, string> | undefined }
 const stage = (id: string, name: string, app: string, goal: string, action: string, expected: string, optional = false): Stage => ({ id, name, app, goal, action, expected, optional, next: `يُستخدم ${expected} أساساً للعمل في المرحلة التالية مع بيانات الدرس الأصلية.` });
 export const GAME_PATHS = [
   { id: 'canva', app: 'Canva', name: 'نشاط بأسلوب لعبة / نقر وتنقل', why: 'صفحات وأزرار وروابط داخلية؛ لا يفترض نقاطاً أو تحققاً برمجياً تلقائياً.' },
@@ -449,7 +449,7 @@ export function workflowStages(d: TaskData): Stage[] {
       stage('review','مراجعة الاختبار','ChatGPT','وضوح وعدالة التقويم','راجِع نص الأسئلة ومستوياتها والدرجات والإجابات.','اختبار مدقق'),
       stage('results','تجهيز الاختبار وتحليل النتائج','ChatGPT','تجهيز الاستخدام والتغذية الراجعة','جهز نسخة الاستخدام؛ حلل نتائج فعلية فقط إن أرفقت، وإلا قدّم نموذج تحليل فارغاً دون اختراع درجات.','خطة استخدام وتحليل عند توفر النتائج'),
     ];
-    case 'games': { const path = GAME_PATHS.find(p => p.id === d.gamePath) ?? GAME_PATHS[5]; return [
+    case 'games': { const path = GAME_PATHS.find(p => p.id === d.gamePath) ?? { app:'Lovable', why:'لعبة متكاملة بمراحل ونقاط وتحقق من الإجابات' }; return [
       stage('idea','فكرة اللعبة والأهداف','ChatGPT','ربط اللعب بالتعلم','ابتكر فكرة وقصة بسيطة مرتبطة بأهداف المعلمة.','فكرة اللعبة'),
       stage('rules','القواعد والمراحل والأسئلة','ChatGPT','تحديات مناسبة لنوع اللعبة','اكتب القواعد والأسئلة والإجابات والتغذية الراجعة وفق المسار المختار؛ لا تفترض قدرات غير متاحة في التطبيق.','قواعد وأسئلة اللعبة'),
       stage('create',`إنشاء اللعبة في ${path.app}`,path.app,path.why,`نفّذ اللعبة باستخدام ${path.app} حسب إمكاناته الفعلية. ${path.why} استخدمي الأمر للتوليد إن توفر، وإلا كدليل إدخال وبناء يدوي.`,'لعبة أو كود أو رابطها'),
@@ -474,14 +474,16 @@ export function workflowStages(d: TaskData): Stage[] {
 export function workflowSignature(d: TaskData, stages: Stage[], index: number): string {
   return JSON.stringify([d.studio,d.subject,d.grade,d.lang,d.title,d.goals,d.content,d.constraints,d.duration,d.learners,d.gamePath, ...stages.slice(0,index).map(s => { const o = d.workflow?.outputs[s.id]; return [s.id,o?.text,o?.skipped]; })]);
 }
-export function stageStale(d: TaskData, stages: Stage[], index: number): boolean { const o = d.workflow?.outputs[stages[index].id]; return !!o && !o.skipped && (o.signature !== workflowSignature(d,stages,index) || stages.slice(0,index).some((_,i) => stageStale(d,stages,i))); }
+export function stageStale(d: TaskData, stages: Stage[], index: number): boolean { const selected = stages[index]; if (!selected) return false; const o = d.workflow?.outputs[selected.id]; return !!o && !o.skipped && (o.signature !== workflowSignature(d,stages,index) || stages.slice(0,index).some((_,i) => stageStale(d,stages,i))); }
 export function buildStagePrompt(d: TaskData, index: number): string {
   const stages = workflowStages(d), s = stages[index];
+  if (!s) throw new Error("مرحلة غير موجودة");
   const previous = stages.slice(0,index).map(p => { const o = d.workflow?.outputs[p.id]; return o?.text ? `مخرجات «${p.name}»:\n${o.text}` : ''; }).filter(Boolean);
-  return [buildPrompt(d), '\n--- مهمة هذه المرحلة فقط ---', `التطبيق: ${s.app}. المرحلة ${index + 1}: ${s.name}`, `الهدف: ${s.goal}`, `المهمة: ${s.action}`, `المخرج المتوقع: ${s.expected}`, `نفّذ مهمة هذه المرحلة فقط، ولا تنفذ بقية مراحل المورد. حافظ على الأهداف والمعلومات العلمية والشروط الأصلية. لغة الناتج: ${d.lang === 'en' ? 'English' : 'العربية'}.`, d.studio === 'planning' ? `أهداف المعلمة حرفياً دون أي تعديل:\n${d.goals}\nلا تقترح أهدافاً جديدة ولا تخترع محتوى غير موجود في البيانات أو المصادر.` : '', d.studio === 'games' ? `مسار اللعبة: ${(GAME_PATHS.find(p=>p.id===d.gamePath) ?? GAME_PATHS[5]).why}` : '', ...previous].filter(Boolean).join('\n\n');
+  return [buildPrompt(d), '\n--- مهمة هذه المرحلة فقط ---', `التطبيق: ${s.app}. المرحلة ${index + 1}: ${s.name}`, `الهدف: ${s.goal}`, `المهمة: ${s.action}`, `المخرج المتوقع: ${s.expected}`, `نفّذ مهمة هذه المرحلة فقط، ولا تنفذ بقية مراحل المورد. حافظ على الأهداف والمعلومات العلمية والشروط الأصلية. لغة الناتج: ${d.lang === 'en' ? 'English' : 'العربية'}.`, d.studio === 'planning' ? `أهداف المعلمة حرفياً دون أي تعديل:\n${d.goals}\nلا تقترح أهدافاً جديدة ولا تخترع محتوى غير موجود في البيانات أو المصادر.` : '', d.studio === 'games' ? `مسار اللعبة: ${(GAME_PATHS.find(p=>p.id===d.gamePath)?.why ?? 'لعبة متكاملة بمراحل ونقاط')}` : '', ...previous].filter(Boolean).join('\n\n');
 }
 export function saveStageOutput(d: TaskData, index: number, text: string, skipped = false): TaskData {
   const stages = workflowStages(d), s = stages[index];
+  if (!s) throw new Error("مرحلة غير موجودة");
   if (skipped && !s.optional) throw new Error('هذه المرحلة ليست اختيارية');
   if (!skipped && !text.trim()) throw new Error('ألصقي مخرج المرحلة أولاً');
   return { ...d, workflow: { current:index, drafts:d.workflow?.drafts, outputs:{ ...d.workflow?.outputs, [s.id]:{text,skipped,signature:workflowSignature(d,stages,index),savedAt:Date.now()} } } };

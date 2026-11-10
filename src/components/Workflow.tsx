@@ -8,9 +8,10 @@ export function Workflow({ task, onChange }: { task: TaskData; onChange: (task: 
   const stages = workflowStages(task);
   const current = Math.min(task.workflow?.current ?? 0, stages.length - 1);
   const s = stages[current];
+  const [previousOpen, setPreviousOpen] = useState(false);
+  if (!s) return null;
   const saved = task.workflow?.outputs[s.id];
   const text = task.workflow?.drafts?.[s.id] ?? saved?.text ?? '';
-  const [previousOpen, setPreviousOpen] = useState(false);
   const stale = stages.filter((_,i) => stageStale(task,stages,i));
   const completed = stages.filter((p,i) => task.workflow?.outputs[p.id] && !stageStale(task,stages,i)).length;
   const tool = TOOLS[task.studio].find(t=>t.name===s.app);

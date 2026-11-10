@@ -42,7 +42,7 @@ function Result() {
 
   const persist = (updated: TaskData) => {
     try {
-      const saved = upsertTask(updated, d.taskId);
+      const saved = upsertTask(updated, (d as Draft).taskId);
       const next = { ...updated, taskId: saved.id };
       saveDraft(next); setD(next);
       void saveCloudTask(saved).catch(() => toast.error("محفوظ على الجهاز؛ تعذر الحفظ لحسابك، أعيدي المحاولة بزر حفظ مهمتي"));
