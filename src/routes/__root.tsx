@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
-import { SiteHeader, SiteFooter } from "@/components/Shell";
+import { LogoBar, SiteHeader, SiteFooter } from "@/components/Shell";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -123,6 +123,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <div className="flex min-h-screen flex-col">
+        <LogoBar />
         <SiteHeader />
         <main className="flex-1">
           <Outlet />

@@ -4,14 +4,15 @@ import quality from "@/assets/quality_logo.png.asset.json";
 import ministry from "@/assets/ministry_logo.png.asset.json";
 
 export const SCHOOL = "مدرسة الطالب الذكي الخاصة – فرع المعبيلة ٢ – سلطنة عُمان";
-export const CREDIT = "تصميم وإشراف دلال مختار صديقي";
+export const CREDIT_LABEL = "إنجاز وتصميم";
+export const CREDIT_NAME = "الأستاذة دلال مختار صديقي";
+export const CREDIT = `${CREDIT_LABEL} ${CREDIT_NAME}`;
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
         <Link to="/" className="flex min-w-0 items-center gap-3">
-          <img src={school.url} alt="شعار مدرسة الطالب الذكي الخاصة" className="h-12 w-12 shrink-0 object-contain" />
           <span className="min-w-0 leading-tight">
             <span className="block font-display text-xl font-extrabold text-primary">MIDAD <span className="text-gold">|</span> مِداد</span>
             <span className="hidden truncate text-xs text-muted-foreground sm:block">مدرسة الطالب الذكي الخاصة – فرع المعبيلة ٢</span>
@@ -30,16 +31,33 @@ export function SiteHeader() {
   );
 }
 
-export function InstitutionBand() {
+const LOGOS = [
+  { src: school.url, alt: "شعار مدرسة الطالب الذكي الخاصة" },
+  { src: ministry.url, alt: "شعار وزارة التربية والتعليم – سلطنة عُمان" },
+  { src: quality.url, alt: "شعار نظام إدارة الجودة" },
+];
+
+/** Top institutional bar with the three original logos, shown above every page. */
+export function LogoBar() {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-      {[
-        { src: ministry.url, alt: "شعار وزارة التربية والتعليم – سلطنة عُمان" },
-        { src: school.url, alt: "شعار مدرسة الطالب الذكي الخاصة" },
-        { src: quality.url, alt: "شعار نظام إدارة الجودة" },
-      ].map((l) => (
-        <img key={l.alt} src={l.src} alt={l.alt} className="h-16 w-auto max-w-[9rem] object-contain sm:h-20" />
-      ))}
+    <div className="logo-bar border-b border-border">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:justify-center sm:gap-16">
+        {LOGOS.map((l) => (
+          <img key={l.alt} src={l.src} alt={l.alt} className="h-11 w-auto max-w-[6.5rem] object-contain sm:h-16 sm:max-w-[10rem]" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function CreditBlock({ className = "" }: { className?: string }) {
+  return (
+    <div className={`credit-block inline-flex flex-col items-center ${className}`}>
+      <span className="text-sm font-medium tracking-wide opacity-90 md:text-base">{CREDIT_LABEL}</span>
+      <span className="mt-1 flex items-center gap-2 font-display text-2xl font-extrabold md:text-4xl">
+        <span aria-hidden className="text-xl md:text-2xl">✒️</span>{CREDIT_NAME}
+      </span>
+      <span aria-hidden className="credit-rule mt-2 h-1 w-24 rounded-full" />
     </div>
   );
 }
@@ -48,7 +66,6 @@ export function SiteFooter() {
   return (
     <footer className="mt-12 border-t border-border bg-card">
       <div className="mx-auto max-w-6xl space-y-4 px-4 py-6 text-center text-sm text-muted-foreground">
-        <InstitutionBand />
         <p>
           <span className="font-display font-extrabold text-primary">MIDAD | مِداد</span>
           <span className="mx-2 text-gold">|</span>

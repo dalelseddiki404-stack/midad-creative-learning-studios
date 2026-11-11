@@ -143,7 +143,7 @@ function Setup() {
             onClick={() => navigate({ to: "/result" })}
             className="pop-in w-full rounded-3xl bg-gold-grad px-6 py-5 font-display text-2xl font-extrabold text-gold-foreground shadow-glow transition hover:scale-[1.02] active:scale-95"
           >
-            {studio.id === "games" ? "🎮 انتقلي إلى إعدادات اللعبة ومستشارك الذكي" : "✨ اضغطي هنا لمساعدتك"}
+            ✨ اضغطي هنا لمساعدتك
           </Button>
         )}
         <div ref={bottom} />

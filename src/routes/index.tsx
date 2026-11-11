@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { STUDIOS, saveDraft } from "@/lib/midad";
 import { STUDIO_IMAGES } from "@/lib/studio-images";
-import { CREDIT, InstitutionBand, SCHOOL } from "@/components/Shell";
+import { CreditBlock, SCHOOL } from "@/components/Shell";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,20 +29,14 @@ function Home() {
           </h1>
           <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">مداد الإبداع التربوي</p>
           <p className="mt-2 text-lg font-bold text-gold md:text-xl">من الفكرة إلى المورد التعليمي</p>
+          <CreditBlock className="mt-8" />
+          <p className="mt-3 text-sm font-bold opacity-90">{SCHOOL}</p>
           <figure className="mx-auto mt-8 max-w-2xl rounded-3xl border border-primary-foreground/25 bg-primary-foreground/10 px-6 py-5 backdrop-blur-sm">
             <blockquote lang="ar" className="font-quran text-2xl leading-loose md:text-3xl">
               ﴿قُل لَّوْ كَانَ الْبَحْرُ مِدَادًا لِّكَلِمَاتِ رَبِّي لَنَفِدَ الْبَحْرُ قَبْلَ أَن تَنفَدَ كَلِمَاتُ رَبِّي﴾
             </blockquote>
             <figcaption className="mt-2 text-sm opacity-90">سورة الكهف: الآية ١٠٩</figcaption>
           </figure>
-        </div>
-      </section>
-
-      <section className="border-b border-border bg-card py-6">
-        <div className="mx-auto max-w-6xl px-4 text-center">
-          <InstitutionBand />
-          <p className="mt-3 text-sm font-bold text-primary">{SCHOOL}</p>
-          <p className="text-xs text-muted-foreground">{CREDIT}</p>
         </div>
       </section>
 
