@@ -1,4 +1,5 @@
 import { Workflow } from "@/components/Workflow";
+import { GameBuilder } from "@/components/GameBuilder";
 import { Button } from "@/components/ui/button";
 import { saveCloudTask } from "@/lib/workspace-cloud";
 import { CloudAccess } from "@/components/CloudAccess";
@@ -84,6 +85,8 @@ function Result() {
           </div>
         </dl>
       </section>
+
+      {task.studio === "games" && <GameBuilder task={task} onChange={persist} />}
 
       <section className="mb-8 rounded-3xl border-2 border-accent bg-card p-6 shadow-card">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
