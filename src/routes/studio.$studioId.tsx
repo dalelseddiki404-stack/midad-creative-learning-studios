@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { STUDIO_IMAGES } from "@/lib/studio-images";
 import { Progress } from "@/components/Shell";
@@ -92,6 +92,13 @@ function Setup() {
           <h1 className="font-display text-3xl font-extrabold text-primary">لنجهّز مهمتك التعليمية</h1>
         </div>
       </div>
+      {studio.id === "games" && (
+        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-3xl border-2 border-primary bg-secondary p-4 text-sm"><b className="mb-1 block font-display text-base">🎮 ١. برومت تنفيذي</b>برومت متكامل يبني لعبة رقمية حقيقية قابلة للتشغيل.</div>
+          <div className="rounded-3xl border-2 border-primary bg-secondary p-4 text-sm"><b className="mb-1 block font-display text-base">🧭 ٢. مستشارك الذكي</b>يقترح أنسب تطبيق للعبتك بعد إدخال بيانات الدرس.</div>
+          <Link to="/games-library" className="rounded-3xl border-2 border-primary bg-gold p-4 text-sm text-gold-foreground transition hover:-translate-y-0.5 hover:shadow-card"><b className="mb-1 block font-display text-base">📚 ٣. مكتبتي – ألعابي السابقة ←</b>افتحي ألعابك المحفوظة وأعيدي استخدامها.</Link>
+        </div>
+      )}
       <Progress step={step} />
 
       <div className="space-y-4">

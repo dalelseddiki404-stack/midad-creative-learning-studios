@@ -83,6 +83,7 @@
   --accent-foreground: #263746;
   --gold: #FFF3D9;
   --gold-foreground: #263746;
+  --brand-ink: oklch(0.42 0.085 185);
   --destructive: oklch(0.58 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
   --border: oklch(0.9 0.025 220);
@@ -147,4 +148,10 @@ button { white-space: normal; height: auto; min-height: 2.25rem; }
 .workflow-progress::-webkit-progress-value { background: var(--primary); border-radius: 8px; }
 .google-auth-button { background: #FFFFFF; border-color: #747775; color: #1F1F1F; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
-@media print { header, footer, main > div > :not(section), section > :not(.print-workflow) { display: none !important; } .print-workflow { display:block !important; color: var(--foreground); } main, section { padding:0 !important; margin:0 !important; border:0 !important; } }
+@media print { .logo-bar, header, footer, main > div > :not(section), section > :not(.print-workflow) { display: none !important; } .print-workflow { display:block !important; color: var(--foreground); } main, section { padding:0 !important; margin:0 !important; border:0 !important; } }
+
+/* Institutional logo bar and the highlighted creator credit. */
+.logo-bar { background: linear-gradient(180deg, var(--card), var(--secondary)); }
+.credit-block { color: var(--foreground); }
+.credit-block > span:nth-child(2) { color: var(--brand-ink); }
+.credit-rule { background: linear-gradient(90deg, transparent, var(--brand-ink), transparent); }

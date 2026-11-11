@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DeskRouteImport } from './routes/desk'
+import { Route as GamesLibraryRouteImport } from './routes/games-library'
 import { Route as ResultRouteImport } from './routes/result'
 import { Route as StudioStudioIdRouteImport } from './routes/studio.$studioId'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const DeskRoute = DeskRouteImport.update({
   id: '/desk',
   path: '/desk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesLibraryRoute = GamesLibraryRouteImport.update({
+  id: '/games-library',
+  path: '/games-library',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResultRoute = ResultRouteImport.update({
@@ -38,12 +44,14 @@ const StudioStudioIdRoute = StudioStudioIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/desk': typeof DeskRoute
+  '/games-library': typeof GamesLibraryRoute
   '/result': typeof ResultRoute
   '/studio/$studioId': typeof StudioStudioIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/desk': typeof DeskRoute
+  '/games-library': typeof GamesLibraryRoute
   '/result': typeof ResultRoute
   '/studio/$studioId': typeof StudioStudioIdRoute
 }
@@ -51,20 +59,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/desk': typeof DeskRoute
+  '/games-library': typeof GamesLibraryRoute
   '/result': typeof ResultRoute
   '/studio/$studioId': typeof StudioStudioIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/desk' | '/result' | '/studio/$studioId'
+  fullPaths: '/' | '/desk' | '/games-library' | '/result' | '/studio/$studioId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/desk' | '/result' | '/studio/$studioId'
-  id: '__root__' | '/' | '/desk' | '/result' | '/studio/$studioId'
+  to: '/' | '/desk' | '/games-library' | '/result' | '/studio/$studioId'
+  id:
+    | '__root__'
+    | '/'
+    | '/desk'
+    | '/games-library'
+    | '/result'
+    | '/studio/$studioId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DeskRoute: typeof DeskRoute
+  GamesLibraryRoute: typeof GamesLibraryRoute
   ResultRoute: typeof ResultRoute
   StudioStudioIdRoute: typeof StudioStudioIdRoute
 }
@@ -83,6 +99,13 @@ declare module '@tanstack/react-router' {
       path: '/desk'
       fullPath: '/desk'
       preLoaderRoute: typeof DeskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games-library': {
+      id: '/games-library'
+      path: '/games-library'
+      fullPath: '/games-library'
+      preLoaderRoute: typeof GamesLibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/result': {
@@ -105,6 +128,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DeskRoute: DeskRoute,
+  GamesLibraryRoute: GamesLibraryRoute,
   ResultRoute: ResultRoute,
   StudioStudioIdRoute: StudioStudioIdRoute,
 }
